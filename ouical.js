@@ -11,90 +11,105 @@
       formatTime(new Date(event.start.getTime() + (event.duration * MS_IN_MINUTES)));
   };
 
-  var calendarGenerators = {
-    google: function(event) {
-      var startTime = formatTime(event.start);
-      var endTime = calculateEndTime(event);
-
-      var href = encodeURI([
-        'https://www.google.com/calendar/render',
-        '?action=TEMPLATE',
-        '&text=' + (event.title || ''),
-        '&dates=' + (startTime || ''),
-        '/' + (endTime || ''),
-        '&details=' + (event.description || ''),
-        '&location=' + (event.address || ''),
-        '&sprop=&sprop=name:'
-      ].join(''));
-      return '<a class="icon-google" target="_blank" href="' +
-        href + '">Google Calendar</a>';
-    },
-
-    yahoo: function(event) {
-      var eventDuration = event.end ?
-        ((event.end.getTime() - event.start.getTime())/ MS_IN_MINUTES) :
-        event.duration;
-
-      // Yahoo dates are crazy, we need to convert the duration from minutes to hh:mm
-      var yahooHourDuration = eventDuration < 600 ?
-        '0' + Math.floor((eventDuration / 60)) :
-        Math.floor((eventDuration / 60)) + '';
-
-      var yahooMinuteDuration = eventDuration % 60 < 10 ?
-        '0' + eventDuration % 60 :
-        eventDuration % 60 + '';
-
-      var yahooEventDuration = yahooHourDuration + yahooMinuteDuration;
-
-      // Remove timezone from event time
-      var st = formatTime(new Date(event.start - (event.start.getTimezoneOffset() *
-                                                  MS_IN_MINUTES))) || '';
-
-      var href = encodeURI([
-        'http://calendar.yahoo.com/?v=60&view=d&type=20',
-        '&title=' + (event.title || ''),
-        '&st=' + st,
-        '&dur=' + (yahooEventDuration || ''),
-        '&desc=' + (event.description || ''),
-        '&in_loc=' + (event.address || '')
-      ].join(''));
-
-      return '<a class="icon-yahoo" target="_blank" href="' +
-        href + '">Yahoo! Calendar</a>';
-    },
-
-    ics: function(event, eClass, calendarName) {
-      var startTime = formatTime(event.start);
-      var endTime = calculateEndTime(event);
-
-      var href = encodeURI(
-        'data:text/calendar;charset=utf8,' + [
-          'BEGIN:VCALENDAR',
-          'VERSION:2.0',
-          'BEGIN:VEVENT',
-          'URL:' + document.URL,
-          'DTSTART:' + (startTime || ''),
-          'DTEND:' + (endTime || ''),
-          'SUMMARY:' + (event.title || ''),
-          'DESCRIPTION:' + (event.description || ''),
-          'LOCATION:' + (event.address || ''),
-          'END:VEVENT',
-          'END:VCALENDAR'].join('\n'));
-
-      return '<a class="' + eClass + '" target="_blank" href="' +
-        href + '">' + calendarName + ' Calendar</a>';
-    },
-
-    ical: function(event) {
-      return this.ics(event, 'icon-ical', 'iCal');
-    },
-
-    outlook: function(event) {
-      return this.ics(event, 'icon-outlook', 'Outlook');
-    }
+  //Ref: http://blog.richardalucas.com/2013/11/01/Using-Crockford-s-supplant-function-in-Javascript/
+  var supplant = function(string, o) {
+    return string.replace(
+      /\{([^{}]*)\}/g,
+      function (a, b) {
+        var r = o[b];
+        return typeof r === 'string' || typeof r === 'number' ? r : a;
+      }
+    );
   };
 
-  var generateCalendars = function(event) {
+  var getCalendarGenerators = function(messages) {
+    return {
+      google: function (event) {
+        var startTime = formatTime(event.start);
+        var endTime = calculateEndTime(event);
+
+        var href = encodeURI([
+          'https://www.google.com/calendar/render',
+          '?action=TEMPLATE',
+          '&text=' + (event.title || ''),
+          '&dates=' + (startTime || ''),
+          '/' + (endTime || ''),
+          '&details=' + (event.description || ''),
+          '&location=' + (event.address || ''),
+          '&sprop=&sprop=name:'
+        ].join(''));
+        return '<a class="icon-google" target="_blank" href="' +
+          href + '">' + supplant(messages.calendarName, [messages.google]) + '</a>';
+      },
+
+      yahoo: function (event) {
+        var eventDuration = event.end ?
+          ((event.end.getTime() - event.start.getTime()) / MS_IN_MINUTES) :
+          event.duration;
+
+        // Yahoo dates are crazy, we need to convert the duration from minutes to hh:mm
+        var yahooHourDuration = eventDuration < 600 ?
+          '0' + Math.floor((eventDuration / 60)) :
+          Math.floor((eventDuration / 60)) + '';
+
+        var yahooMinuteDuration = eventDuration % 60 < 10 ?
+          '0' + eventDuration % 60 :
+          eventDuration % 60 + '';
+
+        var yahooEventDuration = yahooHourDuration + yahooMinuteDuration;
+
+        // Remove timezone from event time
+        var st = formatTime(new Date(event.start - (event.start.getTimezoneOffset() *
+            MS_IN_MINUTES))) || '';
+
+        var href = encodeURI([
+          'http://calendar.yahoo.com/?v=60&view=d&type=20',
+          '&title=' + (event.title || ''),
+          '&st=' + st,
+          '&dur=' + (yahooEventDuration || ''),
+          '&desc=' + (event.description || ''),
+          '&in_loc=' + (event.address || '')
+        ].join(''));
+
+        return '<a class="icon-yahoo" target="_blank" href="' +
+          href + '">' + supplant(messages.calendarName, [messages.yahoo]) + '</a>';
+      },
+
+      ics: function (event, eClass, calendarName) {
+        var startTime = formatTime(event.start);
+        var endTime = calculateEndTime(event);
+
+        var href = encodeURI(
+          'data:text/calendar;charset=utf8,' + [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'BEGIN:VEVENT',
+            'URL:' + document.URL,
+            'DTSTART:' + (startTime || ''),
+            'DTEND:' + (endTime || ''),
+            'SUMMARY:' + (event.title || ''),
+            'DESCRIPTION:' + (event.description || ''),
+            'LOCATION:' + (event.address || ''),
+            'END:VEVENT',
+            'END:VCALENDAR'].join('\n'));
+
+        return '<a class="' + eClass + '" target="_blank" href="' +
+          href + '">' + supplant(messages.calendarName, [calendarName]) + '</a>';
+      },
+
+      ical: function (event) {
+        return this.ics(event, 'icon-ical', messages.ical);
+      },
+
+      outlook: function (event) {
+        return this.ics(event, 'icon-outlook', messages.outlook);
+      }
+    };
+  };
+
+  var generateCalendars = function(event, messages) {
+    var calendarGenerators = getCalendarGenerators(messages);
+
     return {
       google: calendarGenerators.google(event),
       yahoo: calendarGenerators.yahoo(event),
@@ -135,11 +150,11 @@
       (params.data.end !== undefined || params.data.duration !== undefined);
   };
 
-  var generateMarkup = function(calendars, clazz, calendarId) {
+  var generateMarkup = function(calendars, clazz, calendarId, messages) {
     var result = document.createElement('div');
 
     result.innerHTML = '<label for="checkbox-for-' +
-      calendarId + '" class="add-to-calendar-label">+ Add to my Calendar</label>';
+      calendarId + '" class="add-to-calendar-label">' + messages.addToCalendar + '</label>';
     result.innerHTML += '<input name="add-to-calendar-checkbox" class="add-to-calendar-checkbox" id="checkbox-for-' + calendarId + '" type="checkbox">';
 
     Object.keys(calendars).forEach(function(services) {
@@ -163,6 +178,30 @@
     }
   };
 
+  var getMessages = function(params) {
+    var key,
+        defaultMessages = {
+          addToCalendar: '+ Add to my Calendar',
+          calendarName: '{0} Calendar',
+          google: 'Google',
+          ical: 'iCal',
+          outlook: 'Outlook',
+          yahoo: 'Yahoo!'
+        },
+        messages = typeof params.messages === 'object' ? params.messages : {};
+
+    for (key in defaultMessages) {
+      if (!defaultMessages.hasOwnProperty(key)) {
+        continue;
+      }
+      if (typeof messages[key] !== 'string') {
+        messages[key] = defaultMessages[key];
+      }
+    }
+
+    return messages;
+  };
+
   var getOrGenerateCalendarId = function(params) {
     return params.options && params.options.id ?
       params.options.id :
@@ -174,9 +213,13 @@
       console.log('Event details missing.');
       return;
     }
+    var messages = getMessages(params);
 
-    return generateMarkup(generateCalendars(params.data),
-                          getClass(params),
-                          getOrGenerateCalendarId(params));
+    return generateMarkup(
+      generateCalendars(params.data, messages),
+      getClass(params),
+      getOrGenerateCalendarId(params),
+      messages
+    );
   };
 })(this);

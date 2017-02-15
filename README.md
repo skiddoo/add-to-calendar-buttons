@@ -44,6 +44,25 @@ The only fields that are mandatory are:
 
         // Event Description
         description: 'Get on the front page of HN, then prepare for world domination.'
+      },
+      messages: {
+        //default value '+ Add to my Calendar'
+        addToCalendar: '加入日历',
+
+        //default value '{0} Calendar'
+        calendarName: '{0}日历',
+
+        //default value 'Google'
+        google: '谷歌',
+
+        //default value 'iCal'
+        ical: 'iCal',
+
+        //default value 'Outlook'
+        outlook: 'Outlook',
+
+        //default value 'Yahoo!'
+        yahoo: '雅虎!'
       }
     });
 
